@@ -1,0 +1,5 @@
+.venv
+.env
+.terraform
+.terraform.lock.hcl
+dynamodb wait table-exists --table-name terraform-locks --region eu-central-1
