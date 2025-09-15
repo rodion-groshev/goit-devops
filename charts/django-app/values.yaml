@@ -1,0 +1,21 @@
+image:
+  repository: 998726307957.dkr.ecr.eu-central-1.amazonaws.com/lesson-7-django
+  tag: latest
+  pullPolicy: Always
+
+env:
+  DJANGO_SETTINGS_MODULE: "mysite.settings"
+  DJANGO_DEBUG: "false"
+  DJANGO_SECRET_KEY: "change-me"
+  ALLOWED_HOSTS: "*"
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 8000
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
