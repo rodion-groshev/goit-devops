@@ -1,0 +1,36 @@
+{
+    "Items": [
+        {
+            "Digest": {
+                "S": "8be8a4580c3e752643b6545dcd0a7387"
+            },
+            "LockID": {
+                "S": "goit-devops-lesson-5/lesson-5/terraform.tfstate-md5"
+            }
+        },
+        {
+            "LockID": {
+                "S": "goit-devops-lesson-5/lesson-5/terraform.tfstate"
+            }
+        },
+        {
+            "Digest": {
+                "S": "a31a8dec811d28c44c270feb38e24c3c"
+            },
+            "LockID": {
+                "S": "goit-devops-lesson-5/lesson-7/terraform.tfstate-md5"
+            }
+        },
+        {
+            "Digest": {
+                "S": "20051c5efdd2497b541c3fa51873fa8f"
+            },
+            "LockID": {
+                "S": "goit-devops-lesson-5/terraform.tfstate-md5"
+            }
+        }
+    ],
+    "Count": 4,
+    "ScannedCount": 4,
+    "ConsumedCapacity": null
+}
