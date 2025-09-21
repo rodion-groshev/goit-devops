@@ -161,9 +161,23 @@ argocd repo add https://github.com/your-org/your-app-configs.git   --username $G
 argocd app create myapp   --repo https://github.com/your-org/your-app-configs.git   --path k8s/myapp   --dest-server https://kubernetes.default.svc   --dest-namespace default
 
 argocd app sync myapp
-```
 
+
+```
 > GitOps flow: update image tag in Git → Argo CD syncs to cluster.
+
+# Prometheus and Grafana
+## Get access to Prometheus
+```bash
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090
+```
+## Get access to Grafana
+```bash
+kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80
+```
+#### Grafana credentials: admin / admin123 (або як в values.yaml)
+
+
 
 ---
 
