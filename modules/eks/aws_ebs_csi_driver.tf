@@ -1,46 +1,66 @@
-resource "aws_iam_openid_connect_provider" "oidc" {
+# Dynamic thumbprint for OIDC (avoid drift)
+data "tls_certificate" "oidc_thumbprint" {
+  url = aws_eks_cluster.eks.identity[0].oidc[0].issuer
+}
+
+# Single OIDC provider for the cluster
+resource "aws_iam_openid_connect_provider" "this" {
   url             = aws_eks_cluster.eks.identity[0].oidc[0].issuer
   client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = ["9e99a48a9960b14926bb7f3b02e22da0ecd6c6f9"]
+  thumbprint_list = [data.tls_certificate.oidc_thumbprint.certificates[0].sha1_fingerprint]
 }
 
-# IAM role for EBS CSI Driver
-resource "aws_iam_role" "ebs_csi_irsa_role" {
-  name = "${var.cluster_name}-ebs-csi-irsa-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Effect = "Allow",
-      Principal = {
-        Federated = aws_iam_openid_connect_provider.oidc.arn
-      },
-      Action = "sts:AssumeRoleWithWebIdentity",
-      Condition = {
-        StringEquals = {
-          "${replace(aws_eks_cluster.eks.identity[0].oidc[0].issuer, "https://", "")}:sub" = "system:serviceaccount:kube-system:ebs-csi-controller-sa"
-        }
-      }
-    }]
-  })
+# IRSA trust policy for EBS CSI controller
+data "aws_iam_policy_document" "ebs_csi_trust" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.this.arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(aws_iam_openid_connect_provider.this.url, "https://", "")}:sub"
+      values   = ["system:serviceaccount:kube-system:ebs-csi-controller-sa"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(aws_iam_openid_connect_provider.this.url, "https://", "")}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
 }
 
-# Attach the AmazonEBSCSIDriverPolicy to the IRSA role
-resource "aws_iam_role_policy_attachment" "ebs_irsa_policy" {
+resource "aws_iam_role" "ebs_csi_irsa" {
+  name               = "${var.cluster_name}-ebs-csi-irsa-role"
+  assume_role_policy = data.aws_iam_policy_document.ebs_csi_trust.json
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_csi_policy" {
+  role       = aws_iam_role.ebs_csi_irsa.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-  role       = aws_iam_role.ebs_csi_irsa_role.name
 }
 
-resource "aws_eks_addon" "ebs_csi_driver" {
-  cluster_name                  = aws_eks_cluster.eks.name
-  addon_name                    = "aws-ebs-csi-driver"
+# Choose a compatible addon version
+data "aws_eks_addon_version" "ebs" {
+  addon_name         = "aws-ebs-csi-driver"
+  kubernetes_version = aws_eks_cluster.eks.version
+  most_recent        = true
+}
 
-  addon_version                 = "v1.41.0-eksbuild.1"
+# Single EBS CSI addon resource
+resource "aws_eks_addon" "ebs_csi" {
+  cluster_name                = aws_eks_cluster.eks.name
+  addon_name                  = "aws-ebs-csi-driver"
+  addon_version               = data.aws_eks_addon_version.ebs.version
+  service_account_role_arn    = aws_iam_role.ebs_csi_irsa.arn
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
 
-  service_account_role_arn      = aws_iam_role.ebs_csi_irsa_role.arn
-  resolve_conflicts_on_update   = "PRESERVE"
+  # create after nodes & IRSA to avoid initial DEGRADED state
   depends_on = [
-    aws_iam_openid_connect_provider.oidc,
-    aws_iam_role_policy_attachment.ebs_irsa_policy
+    aws_iam_openid_connect_provider.this,
+    aws_iam_role_policy_attachment.ebs_csi_policy,
+    aws_eks_node_group.general
   ]
 }

@@ -8,25 +8,37 @@ output "cluster_arn" {
   value       = aws_eks_cluster.eks.arn
 }
 
-output "cluster_endpoint" {
-  description = "EKS API endpoint for connecting to the cluster"
-  value       = aws_eks_cluster.eks.endpoint
-}
-
 output "cluster_name" {
   description = "Name of the EKS cluster"
   value       = aws_eks_cluster.eks.name
 }
 
+output "cluster_version" {
+  description = "Kubernetes version"
+  value       = aws_eks_cluster.eks.version
+}
+
+output "cluster_endpoint" {
+  description = "EKS API endpoint"
+  value       = aws_eks_cluster.eks.endpoint
+}
+
+output "cluster_certificate_authority_data" {
+  description = "PEM-encoded cluster CA"
+  value       = aws_eks_cluster.eks.certificate_authority[0].data
+}
+
 output "node_role_arn" {
-  description = "IAM role ARN for EKS Worker Nodes"
+  description = "IAM role ARN for EKS worker nodes"
   value       = aws_iam_role.nodes.arn
 }
 
 output "oidc_provider_arn" {
-  value = aws_iam_openid_connect_provider.oidc.arn
+  description = "IAM OIDC provider ARN"
+  value       = aws_iam_openid_connect_provider.this.arn
 }
 
 output "oidc_provider_url" {
-  value = aws_iam_openid_connect_provider.oidc.url
+  description = "IAM OIDC provider URL"
+  value       = aws_iam_openid_connect_provider.this.url
 }

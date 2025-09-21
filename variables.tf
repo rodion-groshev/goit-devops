@@ -24,7 +24,7 @@ variable "github_repo_url" {
 variable "instance_type" {
   description = "EC2 instance type for the worker nodes"
   type        = string
-  default     = "t3.small"
+  default     = "t3.medium"
 }
 
 variable "repository_name" {

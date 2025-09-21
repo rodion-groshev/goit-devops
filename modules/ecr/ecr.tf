@@ -8,7 +8,7 @@ resource "aws_ecr_repository" "ecr" {
   }
 
   tags = {
-    Name        = var.repository_name
+    Name = var.repository_name
   }
 }
 
@@ -16,11 +16,11 @@ data "aws_caller_identity" "current" {}
 
 locals {
   default_policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowPushPullWithinAccount"
-        Effect    = "Allow"
+        Sid    = "AllowPushPullWithinAccount"
+        Effect = "Allow"
         Principal = {
           AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         }
@@ -40,5 +40,5 @@ locals {
 
 resource "aws_ecr_repository_policy" "ecr_policy" {
   repository = aws_ecr_repository.ecr.name
-  policy = coalesce(var.repository_policy, local.default_policy)
+  policy     = coalesce(var.repository_policy, local.default_policy)
 }

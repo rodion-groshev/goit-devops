@@ -82,10 +82,10 @@ resource "aws_iam_role_policy" "jenkins_ecr_policy" {
 }
 
 resource "helm_release" "jenkins" {
-  timeout = 900
-  atomic  = true
-  wait    = true
-  depends_on = [kubernetes_namespace.jenkins]
+  timeout          = 900
+  atomic           = true
+  wait             = true
+  depends_on       = [kubernetes_namespace.jenkins]
   name             = "jenkins"
   namespace        = "jenkins"
   repository       = "https://charts.jenkins.io"
